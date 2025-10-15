@@ -144,6 +144,20 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .doc-item .doc-path:hover {
+            overflow: visible;
+            white-space: normal;
+            word-break: break-all;
+            z-index: 1000;
+            background: white;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .doc-status {
@@ -876,8 +890,9 @@
                         <h4 style="color: #856404; margin-bottom: 15px;">🔍 调试信息</h4>
                         <div style="background: white; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px;">
                             <p><strong>文档标题:</strong> ${doc.title}</p>
-                            <p><strong>原始路径:</strong> ${doc.path}</p>
-                            <p><strong>编码路径:</strong> ${encodeURIComponent(doc.path)}</p>
+                            <p><strong>原始路径:</strong> <code style="word-break: break-all;">${doc.path}</code></p>
+                            <p><strong>编码路径:</strong> <code style="word-break: break-all;">${encodeURIComponent(doc.path)}</code></p>
+                            <p><strong>实际尝试:</strong> <code style="word-break: break-all;">${pathToFetch}</code></p>
                             <p><strong>错误信息:</strong> ${error.message}</p>
                         </div>
                     </div>
