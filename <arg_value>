@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+测试特殊字符文件加载
+"""
+
+import os
+import time
+import threading
+import webbrowser
+from http.server import SimpleHTTPRequestHandler
+from socketserver import TCPServer
+from urllib.parse import quote, unquote
+
+def test_special_chars():
+    """测试特殊字符文件"""
+    base_dir = "/Users/liyang/Desktop/03-学习资料/hollis八股文(1)"
+
+    # 测试包含特殊字符的文件
+    test_files = [
+        "Java基础/BigDecimal(double)和BigDecimal(String)有什么区别？.md",
+        "数据结构/数组和链表有何区别？.md",
+        "数据结构/什么是小顶堆，可以用在哪些场景？.md",
+        "数据结构/什么是B+树，和B树有什么区别？.md",
+        "Java基础/如何理解Java中的多态？.md"
+    ]
+
+    print("🧪 测试特殊字符文件")
+    print("=" * 50)
+
+    for i, file_path in enumerate(test_files, 1):
+        print(f"{i}. {file_path}")
+
+        full_path = os.path.join(base_dir, file_path)
+        if os.path.exists(full_path):
+            print(f"   ✅ 文件存在")
+
+            # 测试URL编码
+            encoded = quote(file_path)
+            print(f"   🔗 URL编码: {encoded[:50]}...")
+
+            # 测试解码
+            decoded = unquote(encoded)
+            print(f"   🔓 URL解码: {decoded}")
+
+            # 检查编码是否正确
+            if decoded == file_path:
+                print(f"   ✅ 编码/解码正确")
+            else:
+                print(f"   ❌ 编码/解码错误")
+        else:
+            print(f"   ❌ 文件不存在")
+        print()
+
+    # 启动服务器进行实际测试
+    print("🚀 启动测试服务器进行实际加载测试...")
+    print("=" * 50)
+
+    port = 8003
+    os.chdir(base_dir)
+
+    class QuietHandler(SimpleHTTPRequestHandler):
+        def log_message(self, format, *args):
+            pass
+
+    try:
+        with TCPServer(("", port), QuietHandler) as httpd:
+            print(f"✅ 测试服务器已启动: http://localhost:{port}")
+            print("📖 现在可以测试以下功能:")
+            print("   1. 主页面加载")
+            print("   2. 文档索引解析")
+            print("   3. 特殊字符文档访问")
+            print("   4. 错误处理和调试信息")
+            print()
+            print("⏳ 3秒后自动打开浏览器...")
+
+            def delayed_open():
+                time.sleep(3)
+                try:
+                    webbrowser.open(f'http://localhost:{port}')
+                    print("🌐 浏览器已打开，可以开始测试了")
+                except:
+                    print("❌ 无法自动打开浏览器，请手动访问")
+
+            browser_thread = threading.Thread(target=delayed_open)
+            browser_thread.daemon = True
+            browser_thread.start()
+
+            print("🔄 服务器运行中... (15秒后自动停止)")
+
+            # 运行15秒后停止
+            def auto_stop():
+                time.sleep(15)
+                print("\n🛑 测试完成")
+                httpd.shutdown()
+
+            stop_thread = threading.Thread(target=auto_stop)
+            stop_thread.daemon = True
+            stop_thread.start()
+
+            httpd.serve_forever()
+
+    except OSError as e:
+        print(f"❌ 端口 {port} 被占用")
+        return False
+    except KeyboardInterrupt:
+        print("\n👋 测试已停止")
+        return False
+
+    return True
+
+if __name__ == "__main__":
+    success = test_special_chars()
+
+    if success:
+        print("\n✅ 特殊字符文件测试完成！")
+        print("💡 现在应该能够正常加载包含特殊字符的文档了")
+    else:
+        print("\n❌ 测试失败")

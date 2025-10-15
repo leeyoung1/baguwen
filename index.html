@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java 面试八股文阅读器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 350px;
+            background: #fff;
+            border-right: 1px solid #e1e8ed;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .search-box {
+            position: relative;
+            margin-top: 15px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            background: rgba(255,255,255,0.9);
+        }
+
+        .search-box::after {
+            content: "🔍";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .category-section {
+            margin-bottom: 15px;
+        }
+
+        .category-header {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .category-header:hover {
+            background: #e9ecef;
+        }
+
+        .category-header.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .doc-list {
+            display: none;
+            background: white;
+        }
+
+        .doc-list.active {
+            display: block;
+        }
+
+        .doc-item {
+            padding: 10px 20px 10px 35px;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f1f3f4;
+            position: relative;
+        }
+
+        .doc-item:hover {
+            background: #f8f9fa;
+            border-left-color: #667eea;
+        }
+
+        .doc-item.active {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            color: #1976d2;
+        }
+
+        .doc-item .doc-title {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .doc-item .doc-path {
+            display: block;
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .doc-status {
+            font-size: 12px;
+            margin-right: 5px;
+            display: inline-block;
+        }
+
+        .doc-status.available {
+            color: #28a745;
+        }
+
+        .doc-status.unavailable {
+            color: #dc3545;
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .content-header {
+            padding: 20px 30px;
+            background: #fff;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .content-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .markdown-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+
+        .markdown-content h1 {
+            font-size: 28px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .markdown-content h2 {
+            font-size: 22px;
+            border-bottom: 1px solid #e1e8ed;
+            padding-bottom: 8px;
+        }
+
+        .markdown-content h3 {
+            font-size: 18px;
+        }
+
+        .markdown-content p {
+            margin-bottom: 16px;
+            color: #495057;
+        }
+
+        .markdown-content code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background: #f8f9fa;
+            border: 1px solid #e1e8ed;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-content ul, .markdown-content ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        .markdown-content li {
+            margin-bottom: 8px;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 16px;
+            margin: 16px 0;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #e1e8ed;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-hint {
+            font-size: 14px;
+            color: #adb5bd;
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #667eea;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 标签样式 */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .tag.hot {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .tag.important {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                top: 0;
+                left: -100%;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .markdown-content {
+                padding: 20px;
+            }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>📚 Java 面试八股文</h1>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索文档..." />
+                </div>
+            </div>
+            <div id="categoryList"></div>
+        </aside>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <div class="content-header">
+                <h2 class="content-title" id="contentTitle">选择文档开始阅读</h2>
+                <div class="content-actions">
+                    <button class="action-btn" id="toggleSidebar" style="display: none;">☰ 菜单</button>
+                    <button class="action-btn" id="backToTop">↑ 回到顶部</button>
+                </div>
+            </div>
+            <div class="markdown-content" id="markdownContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📖</div>
+                    <div class="empty-state-text">欢迎使用 Java 面试八股文阅读器</div>
+                    <div class="empty-state-hint">请从左侧导航栏选择要阅读的文档</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentIndex = null;
+        let currentContent = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadIndexContent();
+            initializeEventListeners();
+            checkMobileView();
+        });
+
+        // 检查移动端视图
+        function checkMobileView() {
+            const isMobile = window.innerWidth <= 768;
+            const toggleBtn = document.getElementById('toggleSidebar');
+            const sidebar = document.getElementById('sidebar');
+
+            if (isMobile) {
+                toggleBtn.style.display = 'block';
+                sidebar.classList.remove('open');
+            } else {
+                toggleBtn.style.display = 'none';
+                sidebar.classList.remove('open');
+            }
+        }
+
+        // 初始化事件监听器
+        function initializeEventListeners() {
+            // 搜索功能
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                filterDocuments(searchTerm);
+            });
+
+            // 切换侧边栏（移动端）
+            document.getElementById('toggleSidebar').addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('open');
+            });
+
+            // 回到顶部
+            document.getElementById('backToTop').addEventListener('click', function() {
+                document.getElementById('markdownContent').scrollTop = 0;
+            });
+
+            // 响应式检查
+            window.addEventListener('resize', checkMobileView);
+        }
+
+        // 加载索引内容
+        async function loadIndexContent() {
+            try {
+                // 尝试从服务器加载
+                const response = await fetch('index.md');
+                const content = await response.text();
+                currentIndex = content;
+                parseAndRenderIndex(content);
+            } catch (error) {
+                console.log('服务器加载失败，尝试离线模式:', error);
+                loadOfflineMode();
+            }
+        }
+
+        // 离线模式 - 提供常用文档链接（使用实际文件名）
+        function loadOfflineMode() {
+            const offlineCategories = {
+                "必读": [
+                    { title: "必读", path: "必读/必读.md", category: "必读" },
+                    { title: "我该看哪些东西？", path: "必读/我该看哪些东西？.md", category: "必读" },
+                    { title: "To读者&交流群", path: "必读/To读者&交流群.md", category: "必读" }
+                ],
+                "面试必备": [
+                    { title: "面试前必须要准备哪些内容？", path: "面试必备/面试前必须要准备哪些内容？.md", category: "面试必备" },
+                    { title: "简历指导", path: "面试必备/简历指导.md", category: "面试必备" },
+                    { title: "简历自查", path: "面试必备/简历自查.md", category: "面试必备" },
+                    { title: "简历模板——应届生", path: "面试必备/简历模板——应届生.md", category: "面试必备" }
+                ],
+                "Java基础": [
+                    { title: "如何理解面向对象和面向过程？", path: "Java基础/如何理解面向对象和面向过程？.md", category: "Java基础" },
+                    { title: "接口和抽象类的区别，如何选择？", path: "Java基础/接口和抽象类的区别，如何选择？.md", category: "Java基础" },
+                    { title: "如何理解Java中的多态？", path: "Java基础/如何理解Java中的多态？.md", category: "Java基础" },
+                    { title: "什么是深拷贝和浅拷贝？", path: "Java基础/什么是深拷贝和浅拷贝？.md", category: "Java基础" }
+                ],
+                "JVM": [
+                    { title: "Java是如何实现的平台无关？", path: "JVM/Java是如何实现的平台无关？.md", category: "JVM" },
+                    { title: "Java是编译型还是解释型", path: "JVM/Java是编译型还是解释型_.md", category: "JVM" },
+                    { title: "简单介绍一下JIT优化技术？", path: "JVM/简单介绍一下JIT优化技术？.md", category: "JVM" }
+                ],
+                "Spring": [
+                    { title: "介绍一下Spring的IOC", path: "Spring/介绍一下Spring的IOC.md", category: "Spring" },
+                    { title: "介绍一下Spring的AOP", path: "Spring/介绍一下Spring的AOP.md", category: "Spring" },
+                    { title: "Spring中如何开启事务？", path: "Spring/Spring中如何开启事务？.md", category: "Spring" }
+                ],
+                "MySQL": [
+                    { title: "有了关系型数据库，为什么还需要NOSQL？", path: "MySQL/有了关系型数据库，为什么还需要NOSQL？.md", category: "MySQL" },
+                    { title: "char和varchar的区别？", path: "MySQL/char和varchar的区别？.md", category: "MySQL" },
+                    { title: "MySQL5.x和8.0有什么区别？", path: "MySQL/MySQL5.x和8.0有什么区别？.md", category: "MySQL" }
+                ],
+                "Redis": [
+                    { title: "Redis为什么这么快？", path: "Redis/Redis为什么这么快？.md", category: "Redis" },
+                    { title: "Redis支持哪几种数据类型？", path: "Redis/Redis支持哪几种数据类型？.md", category: "Redis" },
+                    { title: "Redis的持久化机制是怎样的？", path: "Redis/Redis的持久化机制是怎样的？.md", category: "Redis" }
+                ],
+                "集合类": [
+                    { title: "Java中的集合类有哪些？如何分类的？", path: "集合类/Java中的集合类有哪些？如何分类的？.md", category: "集合类" },
+                    { title: "ArrayList、LinkedList与Vector的区别？", path: "集合类/ArrayList、LinkedList与Vector的区别？.md", category: "集合类" },
+                    { title: "HashMap的数据结构是怎样的？", path: "集合类/HashMap的数据结构是怎样的？.md", category: "集合类" }
+                ],
+                "Java并发": [
+                    { title: "什么是多线程中的上下文切换？", path: "Java并发/什么是多线程中的上下文切换？.md", category: "Java并发" },
+                    { title: "线程有几种状态，状态之间的流转是怎样的？", path: "Java并发/线程有几种状态，状态之间的流转是怎样的？.md", category: "Java并发" },
+                    { title: "创建线程有几种方式？", path: "Java并发/创建线程有几种方式？.md", category: "Java并发" }
+                ],
+                "计算机网络": [
+                    { title: "介绍一下OSI七层模型？", path: "计算机网络/介绍一下OSI七层模型？.md", category: "计算机网络" },
+                    { title: "什么是TCP三次握手、四次挥手？", path: "计算机网络/什么是TCP三次握手、四次挥手？.md", category: "计算机网络" },
+                    { title: "TCP和UDP的区别是什么？", path: "计算机网络/TCP和UDP的区别是什么？.md", category: "计算机网络" }
+                ]
+            };
+
+            // 显示离线提示
+            document.getElementById('contentTitle').textContent = '离线模式';
+            document.getElementById('markdownContent').innerHTML = `
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: #856404; margin-bottom: 10px;">⚠️ 离线模式</h3>
+                    <p style="color: #856404; margin-bottom: 10px;">当前为离线模式，仅显示部分常用文档。</p>
+                    <p style="color: #856404; margin-bottom: 0;">要查看完整文档，请使用启动脚本运行本地服务器。</p>
+                </div>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <div class="empty-state-text">离线模式已启用</div>
+                    <div class="empty-state-hint">请从左侧选择文档开始阅读（仅显示部分文档）</div>
+                </div>
+            `;
+
+            renderCategories(offlineCategories);
+
+            // 修改文档加载函数支持离线模式
+            window.loadDocumentOffline = async function(doc) {
+                try {
+                    showLoading();
+                    document.getElementById('contentTitle').textContent = doc.title;
+
+                    // 尝试加载文档内容
+                    try {
+                        const response = await fetch(doc.path);
+                        if (response.ok) {
+                            const content = await response.text();
+
+                            // 渲染 Markdown
+                            const html = marked.parse(content);
+                            document.getElementById('markdownContent').innerHTML = html;
+
+                            // 代码高亮
+                            document.querySelectorAll('pre code').forEach((block) => {
+                                hljs.highlightElement(block);
+                            });
+
+                            // 处理图片路径
+                            processImages(doc.path);
+
+                            // 添加离线模式提示
+                            const offlineNotice = document.createElement('div');
+                            offlineNotice.style.cssText = 'background: #e8f5e8; border: 1px solid #c3e6cb; border-radius: 8px; padding: 15px; margin-bottom: 20px;';
+                            offlineNotice.innerHTML = `
+                                <h4 style="color: #155724; margin: 0 0 10px 0;">✅ 离线模式 - 文档已加载</h4>
+                                <p style="color: #155724; margin: 0;">当前显示离线文档。要查看完整索引和更多文档，请使用启动脚本运行本地服务器。</p>
+                            `;
+
+                            const contentDiv = document.getElementById('markdownContent');
+                            contentDiv.insertBefore(offlineNotice, contentDiv.firstChild);
+
+                            return;
+                        }
+                    } catch (fetchError) {
+                        console.log('离线模式文档加载失败，显示详细错误信息');
+                    }
+
+                    // 如果无法加载文档，显示详细错误信息
+                    document.getElementById('markdownContent').innerHTML = `
+                        <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                            <h3 style="color: #721c24; margin-bottom: 15px;">❌ 文档加载失败</h3>
+                            <div style="background: white; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; margin-bottom: 15px;">
+                                <p style="margin: 5px 0;"><strong>文档标题：</strong> ${doc.title}</p>
+                                <p style="margin: 5px 0;"><strong>尝试路径：</strong> <code>${doc.path}</code></p>
+                                <p style="margin: 5px 0;"><strong>错误原因：</strong> 文件不存在或路径不正确</p>
+                            </div>
+                            <p style="color: #721c24; margin: 0;">可能的原因：文件路径错误、文件已被移动或删除</p>
+                        </div>
+
+                        <div style="background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                            <h3 style="color: #0c5460; margin-bottom: 15px;">🚀 如何查看完整文档</h3>
+                            <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 15px 0; text-align: left; max-width: 700px; margin-left: auto; margin-right: auto;">
+                                <p><strong>方法一：使用启动脚本（推荐，查看所有1300+文档）</strong></p>
+                                <ol style="margin-left: 20px; margin-bottom: 15px;">
+                                    <li>打开终端（命令行）</li>
+                                    <li>进入当前目录：<br><code>cd "/Users/liyang/Desktop/03-学习资料/hollis八股文(1)"</code></li>
+                                    <li>运行启动脚本：<br><code>python3 start.py</code></li>
+                                    <li>浏览器会自动打开，或手动访问：<br><code>http://localhost:8000</code></li>
+                                </ol>
+
+                                <p><strong>方法二：双击运行启动脚本</strong></p>
+                                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                                    <li>macOS: 双击 <code>start.sh</code> 文件</li>
+                                    <li>Windows: 双击 <code>start.bat</code> 文件</li>
+                                </ul>
+
+                                <p><strong>方法三：手动启动本地服务器</strong></p>
+                                <ul style="margin-left: 20px;">
+                                    <li>进入目录后运行：<br><code>python3 -m http.server 8000</code></li>
+                                    <li>然后访问：<br><code>http://localhost:8000</code></li>
+                                </ul>
+                            </div>
+
+                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin-top: 15px;">
+                                <p style="color: #856404; margin: 0; text-align: center;">
+                                    <strong>💡 提示：</strong>使用本地服务器可以获得最佳体验，包括完整的文档索引、搜索功能和所有图片资源。
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; padding: 20px;">
+                            <button onclick="location.reload()" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                🔄 刷新页面重试
+                            </button>
+                        </div>
+                    `;
+                } catch (error) {
+                    showError(`离线模式下无法加载文档: ${doc.path}<br>错误: ${error.message}`);
+                }
+            };
+        }
+
+        // 解析并渲染索引
+        function parseAndRenderIndex(content) {
+            const lines = content.split('\n');
+            const categories = {};
+            let currentCategory = null;
+
+            lines.forEach(line => {
+                line = line.trim();
+
+                // 匹配分类标题
+                if (line.startsWith('## ')) {
+                    currentCategory = line.substring(3).trim();
+                    categories[currentCategory] = [];
+                }
+                // 匹配文档链接
+                else if (line.startsWith('- [') && currentCategory) {
+                    const match = line.match(/\[([^\]]+)\]\(([^)]+)\)/);
+                    if (match) {
+                        const title = match[1].replace('✅', '').trim();
+                        let path = match[2];
+                        const category = path.split('/')[0];
+
+                        // 移除路径中的 ✅ 前缀，因为实际文件名中没有
+                        path = path.replace(/✅/g, '');
+
+                        categories[currentCategory].push({
+                            title: title,
+                            path: path,
+                            category: category
+                        });
+                    }
+                }
+            });
+
+            renderCategories(categories);
+        }
+
+        // 渲染分类列表
+        function renderCategories(categories) {
+            const categoryList = document.getElementById('categoryList');
+            categoryList.innerHTML = '';
+
+            Object.entries(categories).forEach(([categoryName, docs]) => {
+                if (docs.length === 0) return;
+
+                // 创建分类容器
+                const categorySection = document.createElement('div');
+                categorySection.className = 'category-section';
+
+                // 创建分类标题
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
+                categoryHeader.innerHTML = `
+                    <span>${categoryName}</span>
+                    <span style="margin-left: auto; color: #666; font-size: 12px;">${docs.length} 篇</span>
+                `;
+
+                // 创建文档列表
+                const docList = document.createElement('div');
+                docList.className = 'doc-list';
+
+                // 添加文档项
+                docs.forEach(doc => {
+                    const docItem = document.createElement('div');
+                    docItem.className = 'doc-item';
+
+                    // 添加文档状态检查
+                    checkDocumentExists(doc.path).then(exists => {
+                        const statusIcon = exists ? '✅' : '❌';
+                        const statusClass = exists ? 'available' : 'unavailable';
+
+                        docItem.innerHTML = `
+                            <span class="doc-title">
+                                <span class="doc-status ${statusClass}">${statusIcon}</span>
+                                ${doc.title}
+                            </span>
+                            <span class="doc-path">${doc.path}</span>
+                        `;
+
+                        if (!exists) {
+                            docItem.style.opacity = '0.6';
+                            docItem.title = '此文档在离线模式下不可用，请使用本地服务器查看';
+                        }
+                    });
+
+                    docItem.addEventListener('click', () => {
+                    if (window.loadDocumentOffline) {
+                        window.loadDocumentOffline(doc);
+                    } else {
+                        loadDocument(doc);
+                    }
+                });
+                    docList.appendChild(docItem);
+                });
+
+                // 分类标题点击事件
+                categoryHeader.addEventListener('click', () => {
+                    const isActive = categoryHeader.classList.contains('active');
+
+                    // 关闭其他分类
+                    document.querySelectorAll('.category-header.active').forEach(header => {
+                        if (header !== categoryHeader) {
+                            header.classList.remove('active');
+                            header.nextElementSibling.classList.remove('active');
+                        }
+                    });
+
+                    // 切换当前分类
+                    categoryHeader.classList.toggle('active');
+                    docList.classList.toggle('active');
+                });
+
+                categorySection.appendChild(categoryHeader);
+                categorySection.appendChild(docList);
+                categoryList.appendChild(categorySection);
+            });
+        }
+
+        // 检查文档是否存在
+        async function checkDocumentExists(path) {
+            try {
+                const response = await fetch(path, { method: 'HEAD' });
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        // 加载文档内容
+        async function loadDocument(doc) {
+            try {
+                showLoading();
+
+                // 更新活动状态
+                document.querySelectorAll('.doc-item.active').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+
+                // 更新标题
+                document.getElementById('contentTitle').textContent = doc.title;
+
+                // 对文件路径进行URL编码处理
+                const encodedPath = encodeURIComponent(doc.path);
+                let pathToFetch = doc.path;
+
+                // 如果路径包含特殊字符，尝试编码版本
+                if (/[\u4e00-\u9fff()（）&，、？!]/.test(doc.path)) {
+                    pathToFetch = encodedPath;
+                    console.log('文件路径包含特殊字符，使用编码版本:', doc.path, '->', encodedPath);
+                }
+
+                // 加载文档内容
+                const response = await fetch(pathToFetch);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const content = await response.text();
+                currentContent = content;
+
+                // 渲染 Markdown
+                const html = marked.parse(content);
+                document.getElementById('markdownContent').innerHTML = html;
+
+                // 代码高亮
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+
+                // 处理图片路径
+                processImages(doc.path);
+
+                // 移动端关闭侧边栏
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('open');
+                }
+
+            } catch (error) {
+                console.error('加载文档失败:', error);
+
+                // 尝试提供详细的错误信息和调试信息
+                const errorInfo = `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <h4 style="color: #856404; margin-bottom: 15px;">🔍 调试信息</h4>
+                        <div style="background: white; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px;">
+                            <p><strong>文档标题:</strong> ${doc.title}</p>
+                            <p><strong>原始路径:</strong> ${doc.path}</p>
+                            <p><strong>编码路径:</strong> ${encodeURIComponent(doc.path)}</p>
+                            <p><strong>错误信息:</strong> ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+
+                showError(`无法加载文档: ${doc.path}<br>错误: ${error.message}${errorInfo}`);
+
+                // 在控制台提供更多调试信息
+                console.log('调试信息:');
+                console.log('- 文档标题:', doc.title);
+                console.log('- 文件路径:', doc.path);
+                console.log('- 编码路径:', encodeURIComponent(doc.path));
+                console.log('- 错误详情:', error);
+            }
+        }
+
+        // 处理图片路径
+        function processImages(docPath) {
+            const basePath = docPath.substring(0, docPath.lastIndexOf('/') + 1);
+            document.querySelectorAll('#markdownContent img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+                    img.setAttribute('src', basePath + src);
+                }
+            });
+        }
+
+        // 搜索过滤文档
+        function filterDocuments(searchTerm) {
+            const docItems = document.querySelectorAll('.doc-item');
+            const categoryHeaders = document.querySelectorAll('.category-header');
+
+            docItems.forEach(item => {
+                const title = item.querySelector('.doc-title').textContent.toLowerCase();
+                const path = item.querySelector('.doc-path').textContent.toLowerCase();
+                const isMatch = title.includes(searchTerm) || path.includes(searchTerm);
+
+                item.style.display = isMatch ? 'block' : 'none';
+            });
+
+            // 更新分类显示状态
+            categoryHeaders.forEach(header => {
+                const docList = header.nextElementSibling;
+                const visibleDocs = docList.querySelectorAll('.doc-item[style="display: block;"]');
+
+                if (visibleDocs.length > 0 || searchTerm === '') {
+                    header.style.display = 'block';
+                    if (searchTerm !== '') {
+                        header.classList.add('active');
+                        docList.classList.add('active');
+                    }
+                } else {
+                    header.style.display = 'none';
+                }
+            });
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('markdownContent').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <span>正在加载文档...</span>
+                </div>
+            `;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('markdownContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">❌</div>
+                    <div class="empty-state-text">加载失败</div>
+                    <div class="empty-state-hint">${message}</div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
