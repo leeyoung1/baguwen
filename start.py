@@ -13,7 +13,7 @@ import sys
 
 def main():
     # 获取当前目录
-    port = 8002
+    port = 8000
     directory = os.path.dirname(os.path.abspath(__file__))
 
     print("🚀 Java面试八股文阅读器")

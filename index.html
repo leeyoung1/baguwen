@@ -21,6 +21,11 @@
             line-height: 1.6;
         }
 
+        /* 防止侧边栏打开时背景滚动 */
+        body.sidebar-open {
+            overflow: hidden;
+        }
+
         .container {
             display: flex;
             height: 100vh;
@@ -72,6 +77,31 @@
             top: 50%;
             transform: translateY(-50%);
             color: #666;
+            pointer-events: none;
+        }
+
+        /* 搜索清除按钮 */
+        .search-clear {
+            display: none;
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ccc;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        .search-clear.show {
+            display: block;
         }
 
         .category-section {
@@ -257,6 +287,29 @@
             color: #495057;
         }
 
+        /* 隐藏空段落和只包含空白的元素 */
+        .markdown-content p:empty,
+        .markdown-content div:empty,
+        .markdown-content pre:empty {
+            display: none;
+        }
+
+        .markdown-content p:has(> br:only-child) {
+            margin-bottom: 8px;
+        }
+
+        .markdown-content strong,
+        .markdown-content b {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .markdown-content em,
+        .markdown-content i {
+            font-style: italic;
+            color: #495057;
+        }
+
         .markdown-content code {
             background: #f1f3f4;
             padding: 2px 6px;
@@ -312,6 +365,49 @@
             font-style: italic;
         }
 
+        /* 语雀容器样式 */
+        .yuque-container {
+            background: #f8f9fa;
+            border-left: 4px solid #dee2e6;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 6px;
+        }
+
+        .yuque-container.yuque-color1 {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            color: #1565c0;
+        }
+
+        .yuque-container.yuque-color2 {
+            background: #f3e5f5;
+            border-left-color: #9c27b0;
+            color: #6a1b9a;
+        }
+
+        .yuque-container.yuque-color3 {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .yuque-container.yuque-color4 {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+            color: #e65100;
+        }
+
+        .yuque-container.yuque-color5 {
+            background: #fce4ec;
+            border-left-color: #e91e63;
+            color: #ad1457;
+        }
+
+        .yuque-container p:last-child {
+            margin-bottom: 0;
+        }
+
         .markdown-content table {
             border-collapse: collapse;
             width: 100%;
@@ -341,6 +437,34 @@
             border-radius: 6px;
             margin: 16px 0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 附件链接样式 */
+        .markdown-content a[href*=".docx"],
+        .markdown-content a[href*=".pdf"],
+        .markdown-content a[href*=".xlsx"],
+        .markdown-content a[href*=".pptx"] {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            background: #f0f3ff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin: 8px 0;
+        }
+
+        .markdown-content a[href*=".docx"]:hover,
+        .markdown-content a[href*=".pdf"]:hover,
+        .markdown-content a[href*=".xlsx"]:hover,
+        .markdown-content a[href*=".pptx"]:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         /* 空状态 */
@@ -391,6 +515,28 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
         }
 
         /* 标签样式 */
@@ -449,10 +595,19 @@
                 z-index: 1000;
                 transition: left 0.3s ease;
                 box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+                height: 100vh;
+                height: 100dvh; /* 使用动态视口高度，适配移动端键盘 */
             }
 
             .sidebar.open {
                 left: 0;
+            }
+
+            /* 侧边栏内容区域 */
+            #categoryList {
+                height: calc(100% - 140px); /* 减去header高度 */
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             .main-content {
@@ -510,6 +665,14 @@
             .search-box input {
                 padding: 12px 45px 12px 15px;
                 font-size: 16px; /* 防止iOS自动缩放 */
+                -webkit-appearance: none; /* 移除iOS默认样式 */
+                appearance: none; /* 移除默认样式 */
+            }
+
+            /* 搜索框获得焦点时的优化 */
+            .search-box input:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
             }
 
             .category-header {
@@ -575,6 +738,19 @@
             .markdown-content li {
                 margin-bottom: 10px;
                 font-size: 15px;
+            }
+
+            /* 移动端附件链接优化 */
+            .markdown-content a[href*=".docx"],
+            .markdown-content a[href*=".pdf"],
+            .markdown-content a[href*=".xlsx"],
+            .markdown-content a[href*=".pptx"] {
+                font-size: 14px;
+                padding: 12px 16px;
+                width: 100%;
+                justify-content: center;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
             }
 
             .markdown-content blockquote {
@@ -678,6 +854,7 @@
                 <h1>📚 Java 面试八股文</h1>
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="搜索文档..." />
+                    <button class="search-clear" id="searchClear">×</button>
                 </div>
             </div>
             <div id="categoryList"></div>
@@ -707,8 +884,29 @@
         let currentIndex = null;
         let currentContent = null;
 
+        // 路径工具：按段编码，保留斜杠
+        function encodePathPreserveSlashes(path) {
+            if (!path || /^https?:\/\//i.test(path)) return path;
+            return path.split('/').map(part => encodeURIComponent(part)).join('/');
+        }
+
+        // 是否需要编码（包含中文、空格、括号、全角符号等）
+        function shouldEncode(path) {
+            return /[^\w\-./]/.test(path);
+        }
+
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 配置 marked.js
+            marked.setOptions({
+                gfm: true,              // 启用 GitHub Flavored Markdown
+                breaks: true,           // 将单个换行符转换为 <br>
+                pedantic: false,        // 不使用原始的 markdown.pl 规则
+                sanitize: false,        // 不净化 HTML
+                smartLists: true,       // 使用更智能的列表行为
+                smartypants: false      // 不使用智能标点符号
+            });
+            
             loadIndexContent();
             initializeEventListeners();
             checkMobileView();
@@ -731,10 +929,44 @@
 
         // 初始化事件监听器
         function initializeEventListeners() {
+            const searchInput = document.getElementById('searchInput');
+            const searchClear = document.getElementById('searchClear');
+            
             // 搜索功能
-            document.getElementById('searchInput').addEventListener('input', function(e) {
+            searchInput.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.toLowerCase();
                 filterDocuments(searchTerm);
+                
+                // 显示/隐藏清除按钮
+                if (searchTerm) {
+                    searchClear.classList.add('show');
+                } else {
+                    searchClear.classList.remove('show');
+                }
+            });
+
+            // 清除搜索
+            searchClear.addEventListener('click', function() {
+                searchInput.value = '';
+                filterDocuments('');
+                searchClear.classList.remove('show');
+                searchInput.focus();
+            });
+
+            // 搜索框焦点处理 - 移动端优化
+            searchInput.addEventListener('focus', function() {
+                // 在移动端，延迟滚动以等待虚拟键盘弹出
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        const categoryList = document.getElementById('categoryList');
+                        categoryList.scrollTop = 0; // 确保分类列表滚动到顶部
+                    }, 300);
+                }
+            });
+
+            // 搜索框失去焦点时的处理
+            searchInput.addEventListener('blur', function() {
+                // 可以在这里添加需要的处理
             });
 
             // 切换侧边栏（移动端）
@@ -770,18 +1002,28 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
+            const body = document.body;
 
             sidebar.classList.toggle('open');
             overlay.classList.toggle('active');
+            
+            // 防止背景滚动
+            if (sidebar.classList.contains('open')) {
+                body.classList.add('sidebar-open');
+            } else {
+                body.classList.remove('sidebar-open');
+            }
         }
 
         // 关闭侧边栏
         function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
+            const body = document.body;
 
             sidebar.classList.remove('open');
             overlay.classList.remove('active');
+            body.classList.remove('sidebar-open');
         }
 
         // 添加触摸手势支持
@@ -789,38 +1031,78 @@
             let touchStartX = 0;
             let touchEndX = 0;
             const mainContent = document.querySelector('.main-content');
+            const sidebar = document.getElementById('sidebar');
 
+            // 主内容区域的触摸手势
             mainContent.addEventListener('touchstart', function(e) {
                 touchStartX = e.changedTouches[0].screenX;
             }, { passive: true });
 
             mainContent.addEventListener('touchend', function(e) {
                 touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
+                handleMainContentSwipe();
             }, { passive: true });
 
-            function handleSwipe() {
+            function handleMainContentSwipe() {
                 const swipeThreshold = 50;
                 const diff = touchEndX - touchStartX;
 
                 // 从左边缘向右滑动打开侧边栏
-                if (touchStartX < 30 && diff > swipeThreshold) {
+                if (touchStartX < 30 && diff > swipeThreshold && !sidebar.classList.contains('open')) {
                     openSidebar();
                 }
-                // 从右向左滑动关闭侧边栏
-                else if (diff < -swipeThreshold) {
+            }
+
+            // 侧边栏的触摸手势 - 防止事件穿透
+            let sidebarTouchStartX = 0;
+            let sidebarTouchEndX = 0;
+
+            sidebar.addEventListener('touchstart', function(e) {
+                sidebarTouchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            sidebar.addEventListener('touchend', function(e) {
+                sidebarTouchEndX = e.changedTouches[0].screenX;
+                handleSidebarSwipe();
+            }, { passive: true });
+
+            function handleSidebarSwipe() {
+                const swipeThreshold = 100;
+                const diff = sidebarTouchEndX - sidebarTouchStartX;
+
+                // 在侧边栏上从右向左滑动关闭
+                if (diff < -swipeThreshold) {
                     closeSidebar();
                 }
             }
+
+            // 防止侧边栏打开时背景内容滚动
+            sidebar.addEventListener('touchmove', function(e) {
+                if (sidebar.classList.contains('open')) {
+                    const categoryList = document.getElementById('categoryList');
+                    const scrollable = categoryList;
+                    
+                    // 只有当分类列表不在滚动边界时才阻止默认行为
+                    if (scrollable.scrollTop === 0 && e.touches[0].clientY > 0) {
+                        // 在顶部且向下滑动，阻止默认行为
+                        e.preventDefault();
+                    } else if (scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight && e.touches[0].clientY < 0) {
+                        // 在底部且向上滑动，阻止默认行为
+                        e.preventDefault();
+                    }
+                }
+            }, { passive: false });
         }
 
         // 打开侧边栏
         function openSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
+            const body = document.body;
 
             sidebar.classList.add('open');
             overlay.classList.add('active');
+            body.classList.add('sidebar-open');
         }
 
         // 加载索引内容
@@ -919,12 +1201,53 @@
 
                     // 尝试加载文档内容
                     try {
-                        const response = await fetch(doc.path);
+                        const offlinePath = shouldEncode(doc.path) ? encodePathPreserveSlashes(doc.path) : doc.path;
+                        const response = await fetch(offlinePath);
                         if (response.ok) {
                             const content = await response.text();
 
+                            // 预处理 Markdown 内容，修复常见格式问题
+                            let processedContent = content;
+                            
+                            // 清理只包含空格、制表符的行（语雀导出的占位符）
+                            processedContent = processedContent.replace(/^[ \t]+$/gm, '');
+                            
+                            // 清理连续的空行（保留最多2个连续空行）
+                            processedContent = processedContent.replace(/\n{4,}/g, '\n\n\n');
+                            
+                            // 处理语雀容器语法 :::color1 ... :::
+                            processedContent = processedContent.replace(/:::color1\s*([\s\S]*?):::/g, (match, content) => {
+                                return `<div class="yuque-container yuque-color1">\n${content.trim()}\n</div>`;
+                            });
+                            
+                            // 处理其他颜色的容器
+                            processedContent = processedContent.replace(/:::color(\d+)\s*([\s\S]*?):::/g, (match, colorNum, content) => {
+                                return `<div class="yuque-container yuque-color${colorNum}">\n${content.trim()}\n</div>`;
+                            });
+                            
+                            // 处理通用容器语法 :::
+                            processedContent = processedContent.replace(/:::\s*([\s\S]*?):::/g, (match, content) => {
+                                return `<div class="yuque-container">\n${content.trim()}\n</div>`;
+                            });
+                            
+                            // 修复粗体格式：处理 ** 和文字之间有空格的情况
+                            processedContent = processedContent.replace(/\*\* +([^\*]+?) +\*\*/g, '**$1**');
+                            processedContent = processedContent.replace(/\*\* +([^\*]+?)\*\*/g, '**$1**');
+                            processedContent = processedContent.replace(/\*\*([^\*]+?) +\*\*/g, '**$1**');
+                            
+                            // 修复粗体格式：确保 ** 后面紧跟非空格字符（针对中文特殊字符）
+                            processedContent = processedContent.replace(/\*\*([【《\[])/g, '** $1');
+                            processedContent = processedContent.replace(/([】》\]])\*\*/g, '$1 **');
+                            
+                            // 修复斜体格式
+                            processedContent = processedContent.replace(/\* +([^\*]+?) +\*/g, '*$1*');
+
                             // 渲染 Markdown
-                            const html = marked.parse(content);
+                            let html = marked.parse(processedContent);
+                            
+                            // 后处理：修复未被正确渲染的粗体（作为最后的保障）
+                            html = html.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+                            
                             document.getElementById('markdownContent').innerHTML = html;
 
                             // 代码高亮
@@ -934,6 +1257,9 @@
 
                             // 处理图片路径
                             processImages(doc.path);
+
+                            // 处理附件下载链接
+                            processAttachments(doc.path);
 
                             // 添加离线模式提示
                             const offlineNotice = document.createElement('div');
@@ -958,12 +1284,14 @@
                     }
 
                     // 如果无法加载文档，显示详细错误信息
+                    const offlinePath = shouldEncode(doc.path) ? encodePathPreserveSlashes(doc.path) : doc.path;
                     document.getElementById('markdownContent').innerHTML = `
                         <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                             <h3 style="color: #721c24; margin-bottom: 15px;">❌ 文档加载失败</h3>
                             <div style="background: white; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; margin-bottom: 15px;">
                                 <p style="margin: 5px 0;"><strong>文档标题：</strong> ${doc.title}</p>
-                                <p style="margin: 5px 0;"><strong>尝试路径：</strong> <code>${doc.path}</code></p>
+                                <p style="margin: 5px 0;"><strong>原始路径：</strong> <code>${doc.path}</code></p>
+                                <p style="margin: 5px 0;"><strong>编码路径：</strong> <code>${offlinePath}</code></p>
                                 <p style="margin: 5px 0;"><strong>错误原因：</strong> 文件不存在或路径不正确</p>
                             </div>
                             <p style="color: #721c24; margin: 0;">可能的原因：文件路径错误、文件已被移动或删除</p>
@@ -1007,7 +1335,8 @@
                         </div>
                     `;
                 } catch (error) {
-                    showError(`离线模式下无法加载文档: ${doc.path}<br>错误: ${error.message}`);
+                    const offlinePath = shouldEncode(doc.path) ? encodePathPreserveSlashes(doc.path) : doc.path;
+                    showError(`离线模式下无法加载文档: ${doc.path}<br>编码路径: ${offlinePath}<br>错误: ${error.message}`);
                 }
             };
         }
@@ -1133,7 +1462,8 @@
         // 检查文档是否存在
         async function checkDocumentExists(path) {
             try {
-                const response = await fetch(path, { method: 'HEAD' });
+                const encoded = shouldEncode(path) ? encodePathPreserveSlashes(path) : path;
+                const response = await fetch(encoded, { method: 'HEAD' });
                 return response.ok;
             } catch (error) {
                 return false;
@@ -1154,14 +1484,10 @@
                 // 更新标题
                 document.getElementById('contentTitle').textContent = doc.title;
 
-                // 对文件路径进行URL编码处理
-                const encodedPath = encodeURIComponent(doc.path);
-                let pathToFetch = doc.path;
-
-                // 如果路径包含特殊字符，尝试编码版本
-                if (/[\u4e00-\u9fff()（）&，、？!]/.test(doc.path)) {
-                    pathToFetch = encodedPath;
-                    console.log('文件路径包含特殊字符，使用编码版本:', doc.path, '->', encodedPath);
+                // 对文件路径进行按段编码（保留斜杠）
+                let pathToFetch = shouldEncode(doc.path) ? encodePathPreserveSlashes(doc.path) : doc.path;
+                if (pathToFetch !== doc.path) {
+                    console.log('文件路径包含特殊字符，使用编码版本:', doc.path, '->', pathToFetch);
                 }
 
                 // 加载文档内容
@@ -1173,8 +1499,48 @@
                 const content = await response.text();
                 currentContent = content;
 
+                // 预处理 Markdown 内容，修复常见格式问题
+                let processedContent = content;
+                
+                // 清理只包含空格、制表符的行（语雀导出的占位符）
+                processedContent = processedContent.replace(/^[ \t]+$/gm, '');
+                
+                // 清理连续的空行（保留最多2个连续空行）
+                processedContent = processedContent.replace(/\n{4,}/g, '\n\n\n');
+                
+                // 处理语雀容器语法 :::color1 ... :::
+                processedContent = processedContent.replace(/:::color1\s*([\s\S]*?):::/g, (match, content) => {
+                    return `<div class="yuque-container yuque-color1">\n${content.trim()}\n</div>`;
+                });
+                
+                // 处理其他颜色的容器
+                processedContent = processedContent.replace(/:::color(\d+)\s*([\s\S]*?):::/g, (match, colorNum, content) => {
+                    return `<div class="yuque-container yuque-color${colorNum}">\n${content.trim()}\n</div>`;
+                });
+                
+                // 处理通用容器语法 :::
+                processedContent = processedContent.replace(/:::\s*([\s\S]*?):::/g, (match, content) => {
+                    return `<div class="yuque-container">\n${content.trim()}\n</div>`;
+                });
+                
+                // 修复粗体格式：处理 ** 和文字之间有空格的情况
+                processedContent = processedContent.replace(/\*\* +([^\*]+?) +\*\*/g, '**$1**');
+                processedContent = processedContent.replace(/\*\* +([^\*]+?)\*\*/g, '**$1**');
+                processedContent = processedContent.replace(/\*\*([^\*]+?) +\*\*/g, '**$1**');
+                
+                // 修复粗体格式：确保 ** 后面紧跟非空格字符（针对中文特殊字符）
+                processedContent = processedContent.replace(/\*\*([【《\[])/g, '** $1');
+                processedContent = processedContent.replace(/([】》\]])\*\*/g, '$1 **');
+                
+                // 修复斜体格式
+                processedContent = processedContent.replace(/\* +([^\*]+?) +\*/g, '*$1*');
+                
                 // 渲染 Markdown
-                const html = marked.parse(content);
+                let html = marked.parse(processedContent);
+                
+                // 后处理：修复未被正确渲染的粗体（作为最后的保障）
+                html = html.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+                
                 document.getElementById('markdownContent').innerHTML = html;
 
                 // 代码高亮
@@ -1184,6 +1550,9 @@
 
                 // 处理图片路径
                 processImages(doc.path);
+
+                // 处理附件下载链接
+                processAttachments(doc.path);
 
                 // 移动端关闭侧边栏
                 if (window.innerWidth <= 768) {
@@ -1200,7 +1569,7 @@
                         <div style="background: white; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px;">
                             <p><strong>文档标题:</strong> ${doc.title}</p>
                             <p><strong>原始路径:</strong> <code style="word-break: break-all;">${doc.path}</code></p>
-                            <p><strong>编码路径:</strong> <code style="word-break: break-all;">${encodeURIComponent(doc.path)}</code></p>
+                            <p><strong>编码路径:</strong> <code style="word-break: break-all;">${encodePathPreserveSlashes(doc.path)}</code></p>
                             <p><strong>实际尝试:</strong> <code style="word-break: break-all;">${pathToFetch}</code></p>
                             <p><strong>错误信息:</strong> ${error.message}</p>
                         </div>
@@ -1213,7 +1582,7 @@
                 console.log('调试信息:');
                 console.log('- 文档标题:', doc.title);
                 console.log('- 文件路径:', doc.path);
-                console.log('- 编码路径:', encodeURIComponent(doc.path));
+                console.log('- 编码路径:', encodePathPreserveSlashes(doc.path));
                 console.log('- 错误详情:', error);
             }
         }
@@ -1224,9 +1593,132 @@
             document.querySelectorAll('#markdownContent img').forEach(img => {
                 const src = img.getAttribute('src');
                 if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-                    img.setAttribute('src', basePath + src);
+                    const target = src.startsWith('/') ? src : basePath + src;
+                    img.setAttribute('src', shouldEncode(target) ? encodePathPreserveSlashes(target) : target);
                 }
             });
+        }
+
+        // 处理附件下载链接
+        function processAttachments(docPath) {
+            const basePath = docPath.substring(0, docPath.lastIndexOf('/') + 1);
+            
+            // 查找所有链接
+            document.querySelectorAll('#markdownContent a').forEach(link => {
+                const href = link.getAttribute('href');
+                
+                // 检查是否是附件链接（.docx, .pdf, .xlsx, .pptx 等）
+                if (href && /\.(docx|pdf|xlsx|pptx|doc|xls|ppt|zip|rar)$/i.test(href)) {
+                    // 如果是相对路径，转换为完整路径
+                    let fullPath = href;
+                    if (!href.startsWith('http') && !href.startsWith('/')) {
+                        fullPath = basePath + href;
+                    }
+
+                    fullPath = shouldEncode(fullPath) ? encodePathPreserveSlashes(fullPath) : fullPath;
+
+                    // 添加下载属性和样式
+                    link.setAttribute('href', fullPath);
+                    link.setAttribute('download', ''); // 触发下载
+                    link.setAttribute('target', '_blank'); // 新窗口打开
+                    
+                    // 添加下载图标和样式
+                    if (!link.querySelector('.download-icon')) {
+                        const icon = document.createElement('span');
+                        icon.className = 'download-icon';
+                        icon.innerHTML = ' 📥';
+                        icon.style.marginLeft = '5px';
+                        link.appendChild(icon);
+                    }
+                    
+                    // 添加提示样式
+                    link.style.color = '#667eea';
+                    link.style.textDecoration = 'none';
+                    link.style.fontWeight = '600';
+                    link.style.padding = '8px 12px';
+                    link.style.background = '#f0f3ff';
+                    link.style.borderRadius = '6px';
+                    link.style.display = 'inline-block';
+                    link.style.transition = 'all 0.2s';
+                    
+                    // 添加悬停效果
+                    link.addEventListener('mouseenter', function() {
+                        this.style.background = '#667eea';
+                        this.style.color = 'white';
+                        this.style.transform = 'translateY(-2px)';
+                        this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+                    });
+                    
+                    link.addEventListener('mouseleave', function() {
+                        this.style.background = '#f0f3ff';
+                        this.style.color = '#667eea';
+                        this.style.transform = 'translateY(0)';
+                        this.style.boxShadow = 'none';
+                    });
+                    
+                    // 点击事件处理
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // 获取文件名
+                        const fileName = fullPath.split('/').pop();
+                        
+                        // 使用 fetch 下载文件
+                        fetch(fullPath)
+                            .then(response => {
+                                if (!response.ok) throw new Error('下载失败');
+                                return response.blob();
+                            })
+                            .then(blob => {
+                                // 创建下载链接
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = decodeURIComponent(fileName);
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                                
+                                // 显示成功提示
+                                showDownloadSuccess(fileName);
+                            })
+                            .catch(error => {
+                                console.error('下载失败:', error);
+                                alert('下载失败，请刷新页面重试或直接在文件夹中查找该文件：\n' + fullPath);
+                            });
+                    });
+                }
+            });
+        }
+
+        // 显示下载成功提示
+        function showDownloadSuccess(fileName) {
+            const toast = document.createElement('div');
+            const isMobile = window.innerWidth <= 768;
+            
+            toast.style.cssText = `
+                position: fixed;
+                ${isMobile ? 'bottom: 80px; left: 50%; transform: translateX(-50%);' : 'bottom: 20px; right: 20px;'}
+                background: #28a745;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                max-width: ${isMobile ? '90%' : 'auto'};
+                text-align: center;
+            `;
+            toast.innerHTML = `✅ 下载成功：${fileName}`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
         }
 
         // 搜索过滤文档
